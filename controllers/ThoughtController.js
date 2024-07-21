@@ -1,4 +1,4 @@
-const thought = require('../models/Thought')
+const Thought = require('../models/Thought')
 const User = require('../models/User')
 
 module.exports = class ThoughtController {
@@ -7,7 +7,24 @@ module.exports = class ThoughtController {
     }
 
     static async dashboard(req, res) {
-        res.render('thoughts/dashboard')
+        
+            const userId = req.session.userid
+        
+            const user = await User.findOne({
+              where: {
+                id: userId,
+              },
+              include: Thought,
+              plain: true,
+            })
+        
+
+        if(!user) {
+            res.redirect('/login')
+        }
+
+        const thoughts = user.Thoughts.map((result) => result.dataValues)
+        res.render('thoughts/dashboard', { thoughts })
     }
 
     static createThought(req, res) {
@@ -17,7 +34,7 @@ module.exports = class ThoughtController {
     static async createThoughtSave(req, res) {
         const thought = {
             title: req.body.title,
-            UserI: req.session.userid
+            UserId: req.session.userid
         }
 
         try {
