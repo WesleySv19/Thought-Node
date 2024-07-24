@@ -7,23 +7,29 @@ module.exports = class ThoughtController {
     }
 
     static async dashboard(req, res) {
-        
-            const userId = req.session.userid
-        
-            const user = await User.findOne({
-              where: {
-                id: userId,
-              },
-              include: Thought,
-              plain: true,
-            })
-        
 
-        if(!user) {
+        const userId = req.session.userid
+
+        const user = await User.findOne({
+            where: {
+                id: userId,
+            },
+            include: Thought,
+            plain: true,
+        })
+
+
+        if (!user) {
             res.redirect('/login')
         }
 
         const thoughts = user.Thoughts.map((result) => result.dataValues)
+
+        let emptyThoughts = false
+
+        if (thoughts.lenght === 0) {
+            emptyThoughts = true
+        }
         res.render('thoughts/dashboard', { thoughts })
     }
 
@@ -45,6 +51,69 @@ module.exports = class ThoughtController {
             req.session.save(() => {
                 res.redirect('/thoughts/dashboard')
             })
+        } catch (err) {
+            console.log(err)
+        }
+    }
+
+    static async removeThought(req, res) {
+        const id = req.body.id
+        const UserId = req.session.userid
+
+        try {
+            await Thought.destroy({
+                where: {
+                    id: id,
+                    UserId: UserId
+                }
+            })
+
+            req.flash('message', 'Pensamento removido com sucesso!')
+
+            req.session.save(() => {
+                res.redirect('/thoughts/dashboard')
+            })
+
+        } catch (err) {
+            console.log('Aconteceu algum erro!', err)
+        }
+    }
+
+    static async updateThought(req, res) {
+        const id = req.params.id
+
+        const thought = await Thought.findOne({
+            where: {
+                id: id,
+            },
+
+            raw: true
+        })
+
+        res.render('thoughts/edit', { thought })
+    }
+
+    static async updateThoughtSave(req, res) {
+
+        const id = req.body.id
+
+        const thought = {
+            title: req.body.title,
+
+        }
+
+        await Thought.update(thought, {
+            where: {
+                id: id
+            }
+        })
+
+        try {
+            req.flash('message', 'Pensamento atualizado com sucesso')
+
+            req.session.save(() => {
+            res.redirect('/thoughts/dashboard')
+        })
         } catch (err) {
             console.log(err)
         }
