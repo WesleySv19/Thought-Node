@@ -71,6 +71,9 @@ app.get('/', ThoughtController.showThoughts)
 app.get('/login', AuthController.login)
 app.get('/register', AuthController.register)
 
-conn.sync().then(() => {
+conn
+.sync()
+// .sync({force: true})
+.then(() => {
     app.listen(port)
 }).catch((err) => console.log(err))
